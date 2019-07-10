@@ -1,0 +1,27 @@
+{
+  "window_config": {
+    "pixel_size": [
+      "960px",
+      "600px"
+    ],
+    "physical_size": [
+      "18in",
+      "11.25in"
+    ]
+  },
+
+  "widgets": [
+    {
+      "name": "TextWidget",
+      "rect": {"top_left": ["1in", "1in"], "bottom_right": ["17in", "5in"]},
+      "props": {"id":"1"},
+      "constraints":["1.left=2.right+100px", "1.width=50px", "1.top=2.bottom + 50px"]
+    },
+    {
+      "name": "TextWidget",
+      "rect": {"top_left": ["4in", "4in"], "bottom_right": ["8in", "8in"]},
+      "props": {"id":"2"},
+      "constraints": []
+    }
+  ]
+}
