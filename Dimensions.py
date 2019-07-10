@@ -1,19 +1,24 @@
 import re
+import cProfile
 
 
 class Size:
-    pattern = re.compile(r"(\d+(?:\.\d+)?) ?(px|cm|in)")
+    pattern = re.compile(r"^(\d+(?:\.\d+)?) ?(px|cm|in)$")
     units = {"px", "cm", "in"}
     real_units = {"cm", "in"}
 
-    def __init__(self, size_str):
+    @staticmethod
+    def size_from_str(size_str):
         try:
-            size, units = Size.pattern.match(size_str).groups()
-            self.num = float(size)
-            self.units = units
+            num, units = Size.pattern.match(size_str).groups()
+            return Size(float(num), units)
         except Exception as e:
             e.message = f"Construction of Size object from given size string ({size_str}) has failed:\n" + e.message
             raise
+
+    def __init__(self, num=0.0, units="px"):
+        self.num = num
+        self.units = units
 
     def __truediv__(self, other):
         if isinstance(other, Size):
@@ -26,6 +31,17 @@ class Size:
 
     def __str__(self):
         return f"{self.num} {self.units}"
+
+    def __repr__(self):
+        return f"Size({self.num},\"{self.units}\""
+
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return Size(other*self.num, self.units)
+        return NotImplemented
+
+    def __rmul__(self, other):
+        return self * other
 
 
 class Conversion:
@@ -43,7 +59,7 @@ class Conversion:
 
     def to_px(self, size: Size) -> int:
         if isinstance(size, str):
-            size = Size(size)
+            size = Size.size_from_str(size)
         if size.units == "px":
             return int(size.num)
         else:
@@ -55,7 +71,7 @@ class Conversion:
             if self.real_units == other.real_units:
                 return self.conversion == other.conversion
             else:
-                return self.to_px(Size("1in")) == other.to_px(Size("1in"))
+                return self.to_px(Size.size_from_str("1in")) == other.to_px(Size.size_from_str("1in"))
         else:
             return NotImplemented
 
@@ -63,53 +79,80 @@ class Conversion:
         return f"1 {self.real_units} is {self.conversion} pixels"
 
 
+class Expression:
+    @staticmethod
+    def construct_expressions(expression_strs):
+        def split_expressions(strs):
+            strs = list(map(lambda s: s.split("-"), strs.split("+")))
+            strs = [["+"+l[0].strip()] + list(map(lambda s: "-" + s.strip(), l[1:])) for l in strs]
+            return [s for substrs in strs for s in substrs]
+        return list(map(Expression.construct_expression, split_expressions(expression_strs)))
+
+    @staticmethod
+    def construct_expression(expr):
+        og_expr = expr
+        try:
+            if expr[0] == "-":
+                multiplier = -1
+                expr = expr[1:]
+            else:
+                multiplier = 1
+                expr = expr[1:]
+            if re.match(Size.pattern, expr) is not None:
+                return Expression(const=multiplier*Size.size_from_str(expr))
+            expr = expr.split("*")
+            if len(expr) == 1:
+                expr = expr[0]
+            else:
+                try:
+                    multiplier *= float(expr[0])
+                    expr = expr[1]
+                except ValueError:
+                    multiplier *= float(expr[1])
+                    expr = expr[0]
+            obj, prop = expr.split(".")
+            return Expression(obj.strip(), prop.strip(), multiplier)
+        except Exception as e:
+            raise ValueError(f"Construction of Expression failed: Given expression = \"{og_expr}\"\n{e.args[0]}") from e
+
+    def __init__(self, obj=None, prop=None, multiplier=1, const=Size()):
+        self.obj: str = obj
+        self.prop: str = prop
+        self.multiplier: float = multiplier
+        self.const: Size = const
+
+    def evaluate(self, constraint):
+        if self.obj is not None and self.prop is not None:
+            return self.multiplier * constraint.get_widget(self.obj).__getattr__(self.prop) + constraint.to_px(self.const)
+        else:
+            return constraint.to_px(self.const)
+
+
 class Constraint:
     @staticmethod
     def construct_constraint(layout_manager, description: str):
         left, right = description.split("=")
-        obj1, prop1 = left.split(".")
-        right = right.split("+")
-        assert len(right) <= 2, f"Constraint given (\"{description}\") contains more than one '+' or '-' character on the right side of the equation"
-        if len(right) == 1:
-            right = right[0]
-            if re.match(Size.pattern, right) is not None:
-                const = Size(right)
-                return Constraint(layout_manager, obj1, prop1, None, None, 1, const)
-            else:
-                const = Size("0px")
-        else:
-            const = Size(right[1].strip())
-            right = right[0]
-        right = right.split("*")
-        assert len(right) <= 2, f"Constraint given (\"{description}\") contains more than one '*' character on the right side of the equation"
-        if len(right) == 1:
-            ratio = 1
-            right = right[0]
-        else:
-            ratio = float(right[0])
-            right = right[1]
-        obj2, prop2 = right.split(".")
+        obj, prop = left.split(".")
+        expressions = Expression.construct_expressions(right)
+        return Constraint(layout_manager, obj.strip(), prop.strip(), expressions)
 
-        return Constraint(layout_manager, obj1.strip(), prop1.strip(), obj2.strip(), prop2.strip(), ratio, const)
-
-    def __init__(self, layout_manager, obj1, prop1, obj2=None, prop2=None, ratio=1, const=Size("0px")):
+    def __init__(self, layout_manager, obj, prop, expressions: [Expression]):
         self.layout_manager = layout_manager
-        self.obj1 = obj1
-        self.prop1 = prop1
-        self.obj2 = obj2
-        self.prop2 = prop2
-        self.ratio = ratio
-        self.const = const
+        self.obj: str = obj
+        self.prop: str = prop
+        self.expressions: [Expression] = expressions
 
-    # Given an identifier, should return a widget
     def get_widget(self, identifier):
+        if identifier == "parent":
+            return self.layout_manager.get_widget(self.obj).parent
         return self.layout_manager.get_widget(identifier)
 
+    def to_px(self, size: Size):
+        return self.layout_manager.to_px(size)
+
     def evaluate(self):
-        obj1 = self.layout_manager.get_widget(self.obj1)
-        if self.obj2 is not None and self.prop2 is not None:
-            # obj1.prop1 = obj2.prop2 * ratio + const
-            obj2 = self.layout_manager.get_widget(self.obj2)
-            return obj1, self.prop1, obj2.__getattr__(self.prop2) * self.ratio + self.layout_manager.to_px(self.const)
-        else:
-            return obj1, self.prop1, self.layout_manager.to_px(self.const)
+        val = 0
+        for expression in self.expressions:
+            val += expression.evaluate(self)
+        return self.layout_manager.get_widget(self.obj), self.prop, val
+

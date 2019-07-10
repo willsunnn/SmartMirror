@@ -15,8 +15,8 @@ class LayoutManager:
         self.constraints: [Constraint] = []
 
     def set_conversion(self, size):
-        self.pixel_size = Size(size["pixel_size"][0]), Size(size["pixel_size"][1])
-        self.physical_size = Size(size["physical_size"][0]), Size(size["physical_size"][1])
+        self.pixel_size = Size.size_from_str(size["pixel_size"][0]), Size.size_from_str(size["pixel_size"][1])
+        self.physical_size = Size.size_from_str(size["physical_size"][0]), Size.size_from_str(size["physical_size"][1])
         conversions = self.pixel_size[0]/self.physical_size[0], self.pixel_size[1]/self.physical_size[1]
         assert conversions[0] == conversions[1], f"Ratio of pixel size to physical size is inconsistent along width and height\n\t{conversions[0]} and {conversions[1]} are not equal"
         self.conversion: Conversion = conversions[0]

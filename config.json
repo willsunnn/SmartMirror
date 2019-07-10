@@ -15,7 +15,7 @@
       "name": "TextWidget",
       "rect": {"top_left": ["1in", "1in"], "bottom_right": ["17in", "5in"]},
       "props": {"id":"1"},
-      "constraints":["1.left=2.right+100px", "1.width=50px", "1.top=2.bottom + 50px"]
+      "constraints":["1.left=2.right+100px", "1.width=50px", "1.top=2.bottom*1.5"]
     },
     {
       "name": "TextWidget",
