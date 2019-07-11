@@ -77,10 +77,15 @@ class LayoutManagerHelper:
 
 
 class BaseWidget(tkinter.Frame):
+    @staticmethod
+    def construct_widget(parent, widget_config):
+        if "subwidgets" not in widget_config:
+            widget_config["subwidgets"] = []
+        return BaseWidget(parent, widget_config["subwidgets"], widget_config["constraints"], widget_config["props"])
+
     def __init__(self, parent, subwidgets=[], constraints=[], props={}):
-        tkinter.Frame.__init__(self, parent.layout_manager.window)
+        tkinter.Frame.__init__(self, parent.get_window())
         self.parent = parent
-        self.subwidgets = subwidgets
         self.props = props
         if "id" in self.props:
             self.id = self.props["id"]
@@ -88,10 +93,17 @@ class BaseWidget(tkinter.Frame):
             self.id = None
         self.constraints = constraints
         self.dimensions = LayoutManagerHelper()
+        self.subwidgets = list(map(lambda w: BaseWidget.construct_widget(self, w), subwidgets))
+
+    def get_window(self):
+        return self.parent.get_window()
+
+    def get_unused_id(self, w):
+        return self.parent.get_unused_id(w)
 
     def get_id(self) -> str:
         if self.id is None:
-            self.id = self.parent.layout_manager.get_unused_id(self)
+            self.id = self.get_unused_id(self)
         return self.id
 
     def __setattr__(self, key, value):
@@ -109,9 +121,17 @@ class BaseWidget(tkinter.Frame):
     def get_rect(self) -> ((int, int), (int, int)):
         return self.dimensions.get_rect()
 
-    def get_constraints(self) -> [str]:
+    def get_update_time(self):
+        if "update time" in self.props:
+            return int(self.props["update time"])
+
+    def get_own_constraints(self) -> [str]:
         return self.constraints
 
+    def get_all_constraints(self) -> [str]:
+        return self.constraints + [constraint for constrList in map(lambda x: x.constraints, self.subwidgets) for constraint in constrList]
+
     def update_values(self):
-        pass
+        import datetime
+        print(f"Widget Updated: id:{self.id} updated at time {datetime.datetime.now()}")
 

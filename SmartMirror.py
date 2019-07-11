@@ -59,13 +59,31 @@ class LayoutManager:
         return f"LayoutManager Object:\n\tConversion = {self.conversion}\n\tPixel Size = {tuple(map(str, self.pixel_size))}\n\tPhysical Size = {tuple(map(str, self.physical_size))}"
 
 
-class UpdateManager:
-    def __init__(self, widgets):
-        self.widgets = widgets
+class LoopMethod:
+    def __init__(self, func, window, update_milliseconds: int):
+        self.window = window
+        self.time = update_milliseconds
+        self.func = func
 
-    def update_widgets(self):
-        for widget_id, widget in self.widgets.items():
-            widget.update_values()
+    def __call__(self, *args, **kwargs):
+        self.func(*args, **kwargs)
+        self.window.after(self.time, lambda: self.__call__(*args, **kwargs))
+
+
+class UpdateManager:
+    def __init__(self, smart_mirror):
+        self.smart_mirror = smart_mirror
+
+    def add_update_checkers(self, funcs, times, *args, **kargs):
+        for func, time in zip(funcs, times):
+            self.add_update_checker(func, time, *args, **kargs)
+
+    def add_update_checker(self, func, time, *args, **kargs):
+        func = LoopMethod(func, self.smart_mirror.get_window(), time)
+        func(*args, **kargs)
+
+    def add_widget_updater(self, widget, update_time, *args, **kargs):
+        self.add_update_checker(widget.update_values, update_time, *args, **kargs)
 
 
 class SmartMirror:
@@ -79,45 +97,44 @@ class SmartMirror:
         config = SmartMirror.parse_json(json_path)
         self.widgets: {str: BaseWidget} = OrderedDict()
         self.layout_manager: LayoutManager = LayoutManager(config["window_config"], self.widgets)
-        self.update_manager: UpdateManager = UpdateManager(self.widgets)
-        self.add_widgets(config["widgets"])
+        self.update_manager: UpdateManager = UpdateManager(self)
+        self.add_widgets(map(lambda w: BaseWidget.construct_widget(self, w), config["widgets"]))
 
-    def add_widgets(self, widgets_config):
-        for widget in map(self.construct_widget, widgets_config):
-            widget_id = widget.get_id()
-            assert widget_id not in self.widgets.keys(), f"Error, ID already added\nAddedID = {widget_id}\n" + "Preexisting IDs:\n\t" + "\n\t".join([f"widgets[{widget_id}] = {widget}" for widget_id, widget in self.widgets.items()])
-            self.widgets[widget_id] = widget
-            self.layout_manager.add_constraints(widget.get_constraints())
         self.layout_manager.evaluate_constaints()
         self.layout_manager.place_all()
 
-    def construct_widget(self, widget_config):
-        if "subwidgets" not in widget_config:
-            widget_config["subwidgets"] = None
-        return BaseWidget(self, subwidgets=widget_config["subwidgets"], props=widget_config["props"], constraints=widget_config["constraints"])
+    def get_window(self):
+        return self.layout_manager.window
+
+    def get_unused_id(self, w):
+        return self.layout_manager.get_unused_id(w)
+
+    def add_widgets(self, widgets):
+        for widget in widgets:
+            self.add_widget(widget)
+
+    def add_widget(self, widget):
+        widget_id = widget.get_id()
+        assert widget_id not in self.widgets.keys(), f"Error, ID already added\nAddedID = {widget_id}\n" + "Preexisting IDs:\n\t" + "\n\t".join(
+            [f"widgets[{widget_id}] = {widget}" for widget_id, widget in self.widgets.items()])
+        self.widgets[widget_id] = widget
+        self.add_constraints(widget.get_own_constraints())
+        self.add_update_checker(widget)
+        self.add_widgets(widget.subwidgets)
 
     def __str__(self):
         return "Layout Manager = \n\t" + "\n\t".join(str(self.layout_manager).split("\n")) + "\nWidgets = \n\t" + str(self.widgets.items())
 
     def mainloop(self):
-        self.add_update_checkers([self.layout_manager.evaluate_constaints, self.layout_manager.place_all], [1000, 1000])
+        self.update_manager.add_update_checkers([self.layout_manager.evaluate_constaints, self.layout_manager.place_all], [1000, 1000])
         self.layout_manager.window.mainloop()
 
-    def add_update_checkers(self, functions, update_times):
-        class LoopMethod:
-            def __init__(self, func, smart_mirror, update_milliseconds: int):
-                self.sm = smart_mirror
-                self.time = update_milliseconds
-                self.func = func
+    def add_constraints(self, constraints):
+        self.layout_manager.add_constraints(constraints)
 
-            def __call__(self, *args, **kwargs):
-                self.func(*args, **kwargs)
-                self.sm.layout_manager.window.after(100, lambda: self.__call__(*args, **kwargs))
-
-        for func, time in zip(functions, update_times):
-            func = LoopMethod(func, self, time)
-            func()
-
+    def add_update_checker(self, widget):
+        if widget.get_update_time() is not None:
+            self.update_manager.add_widget_updater(widget, widget.get_update_time())
 
 if __name__ == "__main__":
     sm = SmartMirror("config.json")
