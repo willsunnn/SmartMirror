@@ -68,7 +68,7 @@ class LayoutManager:
         constraints are evaluated in the order they are added
         """
         for constraint in self.constraints:
-            obj, prop, value = constraint.evaluate()
+            (obj, prop), value = constraint.evaluate()
             obj.__setattr__(prop, value)
 
     def place_all(self) -> None:
@@ -116,15 +116,22 @@ class LayoutManager:
 
 class LoopMethod:
     """decorator used by update manager to schedule repeated function calls in a tkinter window"""
-    def __init__(self, func, window, update_milliseconds: int):
+    def __init__(self, func, window, update_milliseconds: int, *args, **kargs):
         self.window = window
         self.time = update_milliseconds
         self.func = func
+        self.next_args = args
+        self.next_kargs = kargs
 
-    def __call__(self, *args, **kwargs):
-        """calls the function itself, and then schedules the same function call afterwards"""
-        self.func(*args, **kwargs)
-        self.window.after(self.time, lambda: self.__call__(*args, **kwargs))
+    def __call__(self):
+        """
+        calls the function itself, and then schedules the same function call afterwards
+        when the function is first called, it should return the args and kargs of the next method call
+        """
+        returned_value = self.func(*self.next_args, **self.next_kargs)
+        if returned_value is not None:
+            self.next_kargs, self.next_kargs = returned_value
+        self.window.after(self.time, self.__call__)
 
 
 class UpdateManager:
@@ -153,9 +160,10 @@ class UpdateManager:
         """
         LoopMethod(func, self.smart_mirror.get_window(), time)(*args, **kwargs)
 
-    def add_widget_updater(self, widget, update_time) -> None:
+    def add_widget_updater(self, widget, update_time=None) -> None:
         """Specific case of add_update_checker that registers the widget's update_values function"""
-        self.add_update_checker(widget.update_values, update_time)
+        if update_time is not None:
+            self.add_update_checker(widget.update_values, update_time)
 
 
 class SmartMirror:
@@ -218,8 +226,7 @@ class SmartMirror:
 
     def add_update_checker(self, widget: BaseWidget) -> None:
         """Registers the widget in the UpdateManager so that its value can be updated over time"""
-        if widget.get_update_time() is not None:
-            self.update_manager.add_widget_updater(widget, widget.get_update_time())
+        self.update_manager.add_widget_updater(widget, widget.update_time)
 
     ####################
     # Protocol Methods #
