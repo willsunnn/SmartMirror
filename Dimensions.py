@@ -12,7 +12,8 @@ class Size:
 
     @staticmethod
     def size_from_str(size_str):
-        f"""constructs a Size object from the string if it follows the Size.pattern regular expression ({Size.pattern})"""
+        f"""constructs a Size object from the string if it follows
+        the Size.pattern regular expression ({Size.pattern})"""
         try:
             num, units = Size.pattern.match(size_str).groups()
             return Size(float(num), units)
@@ -156,8 +157,27 @@ class Expression:
             return constraint.to_px(self.const)
 
 
+class CustomExpression(Expression):
+    """Custom Expression that allows more flexibility
+    This constraint uses a function that takes no parameters and returns a Size object when evlauated"""
+
+    def __init__(self, func=lambda: Size()):
+        Expression.__init__(self)
+        self.func = func
+
+    def evaluate(self, constraint):
+        return constraint.to_px(self.func())
+
+
 class Constraint:
     """Used to evaluate all the expressions that determine the object's dimensions"""
+    x_dimensions = ["left", "right", "width"]
+    y_dimensions = ["top", "bottom", "height"]
+
+    @staticmethod
+    def construct_lambda_constraint(layout_manager, obj: str, prop: str, func):
+        """Constructs a constraint in the given LayoutManager using the value of func"""
+        return Constraint(layout_manager, obj, prop, [CustomExpression(func)])
 
     @staticmethod
     def construct_constraint(layout_manager, description: str):
@@ -186,9 +206,22 @@ class Constraint:
         else:
             return self.layout_manager.get_widget(identifier)
 
+    def get_identifier(self):
+        """returns this Constraint's identifier in the OrderedDict that stores the constraints"""
+        return self.obj, self.prop
+
     def to_px(self, size: Size) -> int:
         """Is used to determine the px size of a Size object"""
         return self.layout_manager.to_px(size)
+
+    def get_dependents(self):
+        """yields keys of possible dependent constraints that should be evaluated
+        before this Constraint has been evaluated"""
+        for expression in self.expressions:
+            if expression.obj is not None and expression.prop is not None:
+                for dim in Constraint.x_dimensions if expression.prop in Constraint.x_dimensions else Constraint.y_dimensions if expression.prop in Constraint.y_dimensions else []:
+                    yield expression.obj, dim
+        return StopIteration
 
     def evaluate(self) -> (('BaseWidget', str), int):
         """returns the obj and prop that will be changed, as well as the value that it will become"""

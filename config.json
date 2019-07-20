@@ -12,14 +12,12 @@
 
   "widgets": [
     {
-      "name": "TextWidget",
-      "rect": {"top_left": ["1in", "1in"], "bottom_right": ["17in", "5in"]},
+      "name": "BaseWidget",
       "props": {"id":"1", "update time":1000},
       "constraints":["1.left=2.right+100px", "1.width=50px", "1.top=2.bottom*1.5"],
       "subwidgets": [
         {
           "name": "TextWidget",
-          "rect": {"top_left": ["4in", "4in"], "bottom_right": ["8in", "8in"]},
           "props": {"id":"3"},
           "constraints": ["3.left=2.right+100px", "3.width=1.width"],
           "subwidgets": []
@@ -27,10 +25,15 @@
       ]
     },
     {
-      "name": "TextWidget",
-      "rect": {"top_left": ["4in", "4in"], "bottom_right": ["8in", "8in"]},
+      "name": "BaseWidget",
       "props": {"id":"2", "update time":1500},
-      "constraints": [],
+      "constraints": ["2.left=2in", "2.width=2.5in"],
+      "subwidgets": []
+    },
+    {
+      "name": "BaseWidget",
+      "props": {"id":"4", "update time":1500},
+      "constraints": ["4.left=0.25in", "4.width=1in"],
       "subwidgets": []
     }
   ]

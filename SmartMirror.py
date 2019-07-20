@@ -1,7 +1,8 @@
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import tkinter
 import pathlib
 from BaseWidget import BaseWidget
+from WidgetConstructor import construct_widget
 from Dimensions import Size, Conversion, Constraint
 
 
@@ -28,7 +29,7 @@ class LayoutManager:
         self.set_conversion(size)
         self.window = tkinter.Tk()
         self.configure_window()
-        self.constraints: [Constraint] = []
+        self.constraints: OrderedDict = OrderedDict()
 
     def set_conversion(self, size: {str: [str, str]}) -> None:
         """
@@ -55,20 +56,36 @@ class LayoutManager:
     # Layout Methods #
     ##################
 
-    def add_constraints(self, new_constraints: [str]) -> None:
+    def add_constraints(self, new_constraints: [Constraint]) -> None:
+        for constraint in new_constraints:
+            assert constraint.get_identifier() not in self.constraints
+            self.constraints[constraint.get_identifier()] = constraint
+
+    def add_str_constraints(self, new_constraints: [str]) -> None:
         """
         Constructs and adds a constraint for each string description in new_constraints
         :param new_constraints: contains strings that follow the format necessary for Constraint.construct_constraint
         """
-        self.constraints += map(lambda const: Constraint.construct_constraint(self, const), new_constraints)
+        self.add_constraints(map(lambda c: Constraint.construct_constraint(self, c), new_constraints))
 
     def evaluate_constraints(self) -> None:
         """
         evaluates each constraint's value and sets the corresponding object's property to that value
-        constraints are evaluated in the order they are added
+        constraints are evaluated in the order they are added, with a constraint's dependent constraints
+        being evaluated before it
         """
-        for constraint in self.constraints:
-            (obj, prop), value = constraint.evaluate()
+        evaluated = defaultdict(lambda: False)
+        for key in self.constraints:
+           self.evaluate_constraint(key, evaluated)
+
+    def evaluate_constraint(self, key: (str, str), evaluated):
+        """evaluates an individual constraint and its dependent constraints
+        helper method of LayoutManager.evaluate_constraints"""
+        if not evaluated[key]:
+            for dependent_key in self.constraints[key].get_dependents():
+                if dependent_key in self.constraints: self.evaluate_constraint(dependent_key, evaluated)
+            (obj, prop), value = self.constraints[key].evaluate()
+            evaluated[key] = True
             obj.__setattr__(prop, value)
 
     def place_all(self) -> None:
@@ -190,7 +207,7 @@ class SmartMirror:
         self.widgets: {str: BaseWidget} = OrderedDict()
         self.layout_manager: LayoutManager = LayoutManager(self, config["window_config"])
         self.update_manager: UpdateManager = UpdateManager(self)
-        self.add_widgets(map(lambda w: BaseWidget.construct_widget(self, w), config["widgets"]))
+        self.add_widgets(map(lambda w: construct_widget(self, w), config["widgets"]))
 
         self.layout_manager.evaluate_constraints()
         self.layout_manager.place_all()
@@ -216,13 +233,17 @@ class SmartMirror:
         assert widget_id not in self.widgets.keys(), f"Error, ID already added\nAddedID = {widget_id}\n" + "Preexisting IDs:\n\t" + "\n\t".join(
             [f"widgets[{widget_id}] = {widget}" for widget_id, widget in self.widgets.items()])
         self.widgets[widget_id] = widget
-        self.add_constraints(widget.get_own_constraints())
+        self.add_str_constraints(widget.get_own_constraints())
         self.add_update_checker(widget)
         self.add_widgets(widget.subwidgets)
 
-    def add_constraints(self, constraints: [str]) -> None:
+    def add_constraints(self, constraints: [Constraint]) -> None:
         """Passes the given constraint descriptions to the LayoutManager to be constructed and handled"""
         self.layout_manager.add_constraints(constraints)
+
+    def add_str_constraints(self, constraints: [str]) -> None:
+        """Passes the given constraint descriptions to the LayoutManager to be constructed and handled"""
+        self.layout_manager.add_str_constraints(constraints)
 
     def add_update_checker(self, widget: BaseWidget) -> None:
         """Registers the widget in the UpdateManager so that its value can be updated over time"""
@@ -266,4 +287,7 @@ class SmartMirror:
 if __name__ == "__main__":
     sm = SmartMirror("config.json")
     print(sm)
+    if True:
+        import random
+        sm.add_constraints([Constraint.construct_lambda_constraint(sm.layout_manager, "4", "height", lambda: Size(random.randint(1,10), "in"))])
     sm.mainloop()
