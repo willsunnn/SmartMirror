@@ -15,6 +15,7 @@ def get_import_statements(files: [Path]=get_widget_folders(widgets_path)):
 
 
 from BaseWidget import BaseWidget
+from TextWidget import TextWidget
 exec(get_import_statements())
 
 
@@ -26,15 +27,12 @@ def get_widget_dict(files: [Path] = get_widget_folders()):
     return wd
 
 
-widgets = {"BaseWidget": BaseWidget}
+widgets = {"BaseWidget": BaseWidget,
+           "TextWidget": TextWidget}
 widgets.update(get_widget_dict())
 
 
 def construct_widget(parent, widget_config):
+    print(widgets)
     widget_type = widgets[widget_config["name"]]
-    return construct_widget_helper(widget_type, parent, widget_config)
-
-
-def construct_widget_helper(widget_type, parent, widget_config):
-    print(widget_type, parent, widget_config)
-    return BaseWidget.construct_widget(parent, widget_config)
+    return widget_type(parent, widget_config.get("subwidgets", []), widget_config["constraints"], widget_config["props"])

@@ -99,12 +99,6 @@ class BaseWidget(tkinter.Frame):
     The Widget that other widgets overwrite
     Makes a uniform protocol for layout and update management
     """
-    @staticmethod
-    def construct_widget(parent, widget_config):
-        """constructs a widget from the widget config json"""
-        if "subwidgets" not in widget_config:
-            widget_config["subwidgets"] = []
-        return BaseWidget(parent, widget_config["subwidgets"], widget_config["constraints"], widget_config["props"])
 
     def __init__(self, parent, subwidgets=[], constraints=[], props={}):
         """constructs a widget from the config defined by the parameters"""
@@ -115,7 +109,7 @@ class BaseWidget(tkinter.Frame):
         self.update_time = (lambda val: val if val > 0 else None)(int(self.props.get("update time", -1)))
         self.constraints = constraints
         self.dimensions = LayoutManagerHelper()
-        self.subwidgets = list(map(lambda w: BaseWidget.construct_widget(self, w), subwidgets))
+        self.subwidgets = list(map(self.parent.construct_widget, subwidgets))
 
     def get_window(self):
         """returns the window that the widget is being displayed in"""
@@ -170,4 +164,3 @@ class BaseWidget(tkinter.Frame):
         kargs.update({"count": kargs.get("count", -1)+1})
         print(f"Widget Updated: id:{self.id}\n\tupdate number: {kargs['count']}\n\tupdated at time {datetime.datetime.now()}")
         return args, kargs
-

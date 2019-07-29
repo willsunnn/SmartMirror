@@ -2,7 +2,7 @@ from collections import OrderedDict, defaultdict
 import tkinter
 import pathlib
 from BaseWidget import BaseWidget
-from WidgetConstructor import construct_widget
+import WidgetConstructor
 from Dimensions import Size, Conversion, Constraint
 
 
@@ -207,7 +207,7 @@ class SmartMirror:
         self.widgets: {str: BaseWidget} = OrderedDict()
         self.layout_manager: LayoutManager = LayoutManager(self, config["window_config"])
         self.update_manager: UpdateManager = UpdateManager(self)
-        self.add_widgets(map(lambda w: construct_widget(self, w), config["widgets"]))
+        self.add_widgets(map(self.construct_widget, config["widgets"]))
 
         self.layout_manager.evaluate_constraints()
         self.layout_manager.place_all()
@@ -222,12 +222,16 @@ class SmartMirror:
     # Widget Construction #
     #######################
 
+    def construct_widget(self, widget_config: []):
+        """passes widget construction to the widget constructor"""
+        return WidgetConstructor.construct_widget(self, widget_config)
+
     def add_widgets(self, widgets: [BaseWidget]) -> None:
         """Adds all the widgets and their corresponding subwidgets, constraints, and update checkers"""
         for widget in widgets:
             self.add_widget(widget)
 
-    def add_widget(self, widget: [BaseWidget]) -> None:
+    def add_widget(self, widget: BaseWidget) -> None:
         """Adds a widget and its corresponding subwidgets, constraints, and update checkers"""
         widget_id = widget.get_id()
         assert widget_id not in self.widgets.keys(), f"Error, ID already added\nAddedID = {widget_id}\n" + "Preexisting IDs:\n\t" + "\n\t".join(
