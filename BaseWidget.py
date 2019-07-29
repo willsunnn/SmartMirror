@@ -98,6 +98,9 @@ class BaseWidget(tkinter.Frame):
     """
     The Widget that other widgets overwrite
     Makes a uniform protocol for layout and update management
+    Methods that should be overwritten:
+        update_values
+        place
     """
 
     def __init__(self, parent, subwidgets=[], constraints=[], props={}):
@@ -110,6 +113,7 @@ class BaseWidget(tkinter.Frame):
         self.constraints = constraints
         self.dimensions = LayoutManagerHelper()
         self.subwidgets = list(map(self.parent.construct_widget, subwidgets))
+        self.bind("<Button-1>", self.on_click)
 
     def get_window(self):
         """returns the window that the widget is being displayed in"""
@@ -162,5 +166,14 @@ class BaseWidget(tkinter.Frame):
         """
         import datetime
         kargs.update({"count": kargs.get("count", -1)+1})
-        print(f"Widget Updated: id:{self.id}\n\tupdate number: {kargs['count']}\n\tupdated at time {datetime.datetime.now()}")
+        print(f"Widget Updated: id=\"{self.id}\", {kargs['count']}th update, time={datetime.datetime.now()}")
         return args, kargs
+
+    def place(self, *args, **kargs):
+        """Method that can be overwritten to override placement"""
+        tkinter.Frame.place(self, *args, **kargs)
+
+    def on_click(self, event):
+        """Method that can be called to modify click behavior"""
+        print(f"Widget Clicked: id=\"{self.id}\", point=({event.x},{event.y})")
+
