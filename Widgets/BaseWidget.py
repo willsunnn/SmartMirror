@@ -102,32 +102,6 @@ class BaseWidget(tkinter.Frame):
         update_values
         place
     """
-    @classmethod
-    def has_necessary_config(cls):
-        """Method used to determine if the directory contains the necessary files
-        Intended to be used to ensure that auth credentials or file resources exist"""
-        return all(map(BaseWidget.check_file_exists, cls.get_necessary_config()))
-
-    @staticmethod
-    def get_necessary_config():
-        """Returns the necessary files for for the widget to run correctly"""
-        return []
-
-    @staticmethod
-    def check_file_exists(path: str):
-        """Checks if the file exists"""
-        from pathlib import Path
-        return Path(path).exists()
-
-    @staticmethod
-    def prop_get(props: {str: str}, prop: str, default, is_acceptable=lambda x: True):
-        class PropsException(BaseException):
-            pass
-        val = props.get(prop, default)
-        if is_acceptable(val):
-            return val
-        else:
-            raise PropsException(f"Property of key {prop} from dictionary {props} with default value of {default} is not one of the accepted values {acceptable_values}")
 
     def __init__(self, parent, subwidgets=[], constraints=[], props={}):
         """constructs a widget from the config defined by the parameters"""
@@ -141,6 +115,26 @@ class BaseWidget(tkinter.Frame):
         self.subwidgets = list(map(self.parent.construct_widget, subwidgets))
         self.interactable = BaseWidget.prop_get(props, "interactable", False)
         if self.interactable: self.bind("<Button-1>", self.on_click)
+
+    def __setattr__(self, key, value):
+        """overloads __setattr__ such that if the property is pertinent to layouts,
+        that it is handled by the LayoutManagerHelper"""
+        if key in LayoutManagerHelper.x_dimensions or key in LayoutManagerHelper.y_dimensions:
+            self.dimensions.__setattr__(key, value)
+        else:
+            super(tkinter.Frame, self).__setattr__(key, value)
+
+    def __getattr__(self, key):
+        """overloads __getattr__ such that if the property is pertinent to layouts,
+        that it is the value managed by the LayoutManagerHelper"""
+        if key in LayoutManagerHelper.x_dimensions or key in LayoutManagerHelper.y_dimensions:
+            return self.dimensions.__getattr__(key)
+        else:
+            return self.__dict__[key]
+
+    ####################
+    # Protocol Methods #
+    ####################
 
     def get_window(self) -> tkinter.Tk:
         """returns the window that the widget is being displayed in"""
@@ -163,22 +157,6 @@ class BaseWidget(tkinter.Frame):
             self.id = self.get_unused_id(self)
         return self.id
 
-    def __setattr__(self, key, value):
-        """overloads __setattr__ such that if the property is pertinent to layouts,
-        that it is handled by the LayoutManagerHelper"""
-        if key in LayoutManagerHelper.x_dimensions or key in LayoutManagerHelper.y_dimensions:
-            self.dimensions.__setattr__(key, value)
-        else:
-            super(tkinter.Frame, self).__setattr__(key, value)
-
-    def __getattr__(self, key):
-        """overloads __getattr__ such that if the property is pertinent to layouts,
-        that it is the value managed by the LayoutManagerHelper"""
-        if key in LayoutManagerHelper.x_dimensions or key in LayoutManagerHelper.y_dimensions:
-            return self.dimensions.__getattr__(key)
-        else:
-            return self.__dict__[key]
-
     def get_rect(self) -> ((int, int), (int, int)):
         """returns the rectangle of the widget managed by LayoutManagerHelper"""
         return self.dimensions.get_rect()
@@ -190,6 +168,10 @@ class BaseWidget(tkinter.Frame):
     def get_all_constraints(self) -> [str]:
         """returns all the widget's constraints and all its subwidget's constraints"""
         return self.constraints + [constraint for widget in self.subwidgets for constraint in map(lambda w: w.get_all_constraints(), widget)]
+
+    #######################
+    # Methods to Overload #
+    #######################
 
     def update_values(self, *args, **kargs) -> ((), {}):
         """
@@ -209,3 +191,38 @@ class BaseWidget(tkinter.Frame):
     def on_click(self, event):
         """Method that can be called to modify click behavior"""
         print(f"Widget Clicked: id=\"{self.id}\", point=({event.x},{event.y})")
+
+    ##################
+    # Helper Methods #
+    ##################
+
+    # Methods that are used in verification of the directory structure
+    @classmethod
+    def has_necessary_config(cls):
+        """Method used to determine if the directory contains the necessary files
+        Intended to be used to ensure that auth credentials or file resources exist"""
+        return all(map(BaseWidget.check_file_exists, cls.get_necessary_config()))
+
+    @staticmethod
+    def get_necessary_config():
+        """Returns the necessary files for for the widget to run correctly
+        Overload this to return file paths of necessary files"""
+        return []
+
+    @staticmethod
+    def check_file_exists(path: str):
+        """Checks if the file exists"""
+        from pathlib import Path
+        return Path(path).exists()
+
+    @staticmethod
+    def prop_get(props: {str: str}, prop: str, default, is_acceptable=lambda x: True):
+        """Method used to get values from props easier
+        Allows default values, as well as checks for acceptable values"""
+        class PropsException(BaseException):
+            pass
+        val = props.get(prop, default)
+        if is_acceptable(val):
+            return val
+        else:
+            raise PropsException(f"Property of key {prop} from dictionary {props} with default value of {default} is not one of the accepted values {acceptable_values}")

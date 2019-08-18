@@ -3,5 +3,4 @@ venv
 .idea
 *.swp
 __pycache__/
-credentials.json
 token.pickle

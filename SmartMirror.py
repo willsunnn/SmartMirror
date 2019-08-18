@@ -292,7 +292,7 @@ class SmartMirror:
     ##################
 
     @staticmethod
-    def parse_json(file_name: pathlib.Path):
+    def parse_json(file_name: pathlib.Path or str):
         """returns the object constructed from the json file at the given path"""
         import json
         return json.loads(" ".join(open(file_name)))
