@@ -1,5 +1,4 @@
 import tkinter
-import PathFinder
 
 
 class LayoutManagerHelper:
@@ -104,15 +103,31 @@ class BaseWidget(tkinter.Frame):
         place
     """
     @classmethod
-    def has_necesarry_config(cls):
-        """
-        Method used to determine if the directory contains the necessary files
+    def has_necessary_config(cls):
+        """Method used to determine if the directory contains the necessary files
         Intended to be used to ensure that auth credentials or file resources exist"""
-        return all(map(PathFinder.check_file_exists, cls.get_necesarry_config()))
+        return all(map(BaseWidget.check_file_exists, cls.get_necessary_config()))
 
     @staticmethod
-    def get_necesarry_config():
+    def get_necessary_config():
+        """Returns the necessary files for for the widget to run correctly"""
         return []
+
+    @staticmethod
+    def check_file_exists(path: str):
+        """Checks if the file exists"""
+        from pathlib import Path
+        return Path(path).exists()
+
+    @staticmethod
+    def prop_get(props: {str: str}, prop: str, default, is_acceptable=lambda x: True):
+        class PropsException(BaseException):
+            pass
+        val = props.get(prop, default)
+        if is_acceptable(val):
+            return val
+        else:
+            raise PropsException(f"Property of key {prop} from dictionary {props} with default value of {default} is not one of the accepted values {acceptable_values}")
 
     def __init__(self, parent, subwidgets=[], constraints=[], props={}):
         """constructs a widget from the config defined by the parameters"""
@@ -194,13 +209,3 @@ class BaseWidget(tkinter.Frame):
     def on_click(self, event):
         """Method that can be called to modify click behavior"""
         print(f"Widget Clicked: id=\"{self.id}\", point=({event.x},{event.y})")
-
-    @staticmethod
-    def prop_get(props: {str: str}, prop: str, default, is_acceptable=lambda x: True):
-        class PropsException(BaseException):
-            pass
-        val = props.get(prop, default)
-        if is_acceptable(val):
-            return val
-        else:
-            raise PropsException(f"Property of key {prop} from dictionary {props} with default value of {default} is not one of the accepted values {acceptable_values}")

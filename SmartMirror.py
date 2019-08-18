@@ -1,9 +1,9 @@
 from collections import OrderedDict, defaultdict
 import tkinter
 import pathlib
-from BaseWidget import BaseWidget
-import WidgetConstructor
-from Dimensions import Size, Conversion, Constraint
+from Widgets.BaseWidget import BaseWidget
+from Widgets import WidgetConstructor
+from Widgets.Dimensions import Size, Conversion, Constraint
 
 
 class LayoutManager:
@@ -303,5 +303,5 @@ class SmartMirror:
 
 
 if __name__ == "__main__":
-    sm = SmartMirror("config/config.json")
+    sm = SmartMirror(pathlib.Path("config/config.json"))
     sm.mainloop()

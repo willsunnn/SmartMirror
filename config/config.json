@@ -23,7 +23,7 @@
       "constraints":["1.left=2.right+100px", "1.width=50px", "1.top=2.bottom*1.5"],
       "subwidgets": [
         {
-          "name": "CalendarWidget",
+          "name": "BaseWidget",
           "props": {"id":"3"},
           "constraints": ["3.left=2.right+100px", "3.width=1.width"],
           "subwidgets": []
@@ -34,6 +34,12 @@
       "name": "ClockWidget",
       "props": {"id":"2", "update time":1500},
       "constraints": ["2.left=1in", "2.width=5in", "2.top=1in", "2.height=2.width"],
+      "subwidgets": []
+    },
+    {
+      "name": "CalendarWidget",
+      "props": {"id":"4", "update time":10000},
+      "constraints": ["4.left=2.left", "4.width=2.width", "4.top=2.bottom+1in", "4.height=2.height"],
       "subwidgets": []
     }
   ]

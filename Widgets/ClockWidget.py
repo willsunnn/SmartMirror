@@ -1,5 +1,5 @@
-from tkinter import Label, PhotoImage
-from BaseWidget import BaseWidget
+from tkinter import Label
+from Widgets.BaseWidget import BaseWidget
 from PIL import ImageTk, Image
 import datetime
 
