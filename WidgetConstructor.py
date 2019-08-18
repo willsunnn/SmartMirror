@@ -15,7 +15,9 @@ def get_import_statements(files: [Path]=get_widget_folders(widgets_path)):
 
 
 from BaseWidget import BaseWidget
-from TextWidget import TextWidget
+from Widgets.ClockWidget import ClockWidget
+from Widgets.CalendarWidget import CalendarWidget
+
 exec(get_import_statements())
 
 
@@ -28,11 +30,16 @@ def get_widget_dict(files: [Path] = get_widget_folders()):
 
 
 widgets = {"BaseWidget": BaseWidget,
-           "TextWidget": TextWidget}
+           "CalendarWidget": CalendarWidget,
+           "ClockWidget": ClockWidget}
 widgets.update(get_widget_dict())
 
 
 def construct_widget(parent, widget_config):
-    print(widgets)
     widget_type = widgets[widget_config["name"]]
+    try:
+        assert widget_type.has_necesarry_config()
+    except AssertionError:
+        print(f"Widget of type {widget_type} could not be constructed as it is missing some necesarry files.\n\t Please see config/readme.txt for more details\n\t Widget will be constructed as a BaseWidget")
+        widget_type = BaseWidget
     return widget_type(parent, widget_config.get("subwidgets", []), widget_config["constraints"], widget_config["props"])

@@ -1,4 +1,5 @@
 import tkinter
+import PathFinder
 
 
 class LayoutManagerHelper:
@@ -102,6 +103,16 @@ class BaseWidget(tkinter.Frame):
         update_values
         place
     """
+    @classmethod
+    def has_necesarry_config(cls):
+        """
+        Method used to determine if the directory contains the necessary files
+        Intended to be used to ensure that auth credentials or file resources exist"""
+        return all(map(PathFinder.check_file_exists, cls.get_necesarry_config()))
+
+    @staticmethod
+    def get_necesarry_config():
+        return []
 
     def __init__(self, parent, subwidgets=[], constraints=[], props={}):
         """constructs a widget from the config defined by the parameters"""
@@ -113,15 +124,23 @@ class BaseWidget(tkinter.Frame):
         self.constraints = constraints
         self.dimensions = LayoutManagerHelper()
         self.subwidgets = list(map(self.parent.construct_widget, subwidgets))
-        self.bind("<Button-1>", self.on_click)
+        self.interactable = BaseWidget.prop_get(props, "interactable", False)
+        if self.interactable: self.bind("<Button-1>", self.on_click)
 
-    def get_window(self):
+    def get_window(self) -> tkinter.Tk:
         """returns the window that the widget is being displayed in"""
         return self.parent.get_window()
 
-    def get_unused_id(self, w):
+    def get_unused_id(self, w) -> str:
         """returns an ID in the widget's layout manager that the widget w can take"""
         return self.parent.get_unused_id(w)
+
+    def get_colors(self) -> {str: str}:
+        """returns the dictionary of colors"""
+        return self.parent.get_colors()
+
+    def get_color(self, col) -> str:
+        return self.get_colors()[col]
 
     def get_id(self) -> str:
         """if an ID has been defined, returns that ID. If not, it gets a unique ID and saves it, and then returns it"""
@@ -164,9 +183,8 @@ class BaseWidget(tkinter.Frame):
         :param kargs:
         :return: returns the args, and kargs of the next method call
         """
-        import datetime
         kargs.update({"count": kargs.get("count", -1)+1})
-        print(f"Widget Updated: id=\"{self.id}\", {kargs['count']}th update, time={datetime.datetime.now()}")
+        print(f"Widget Updated: id=\"{self.id}\", update #{kargs['count']}")
         return args, kargs
 
     def place(self, *args, **kargs):
@@ -177,3 +195,12 @@ class BaseWidget(tkinter.Frame):
         """Method that can be called to modify click behavior"""
         print(f"Widget Clicked: id=\"{self.id}\", point=({event.x},{event.y})")
 
+    @staticmethod
+    def prop_get(props: {str: str}, prop: str, default, is_acceptable=lambda x: True):
+        class PropsException(BaseException):
+            pass
+        val = props.get(prop, default)
+        if is_acceptable(val):
+            return val
+        else:
+            raise PropsException(f"Property of key {prop} from dictionary {props} with default value of {default} is not one of the accepted values {acceptable_values}")

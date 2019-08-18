@@ -16,7 +16,7 @@ class LayoutManager:
     # Setup Methods #
     #################
 
-    def __init__(self, parent, size: {str: tuple}):
+    def __init__(self, parent, size: {str: tuple}, colors: {str: str}):
         """
         Initializes a layout manager object that manages the widgets of parents.widgets
 
@@ -27,6 +27,7 @@ class LayoutManager:
         self.conversion: Conversion = None
         self.physical_size, self.pixel_size = None, None
         self.set_conversion(size)
+        self.colors = colors
         self.window = tkinter.Tk()
         self.configure_window()
         self.constraints: OrderedDict = OrderedDict()
@@ -48,7 +49,7 @@ class LayoutManager:
     def configure_window(self) -> None:
         """Sets the default settings for the tkinter window"""
         self.window.title = "MirrorGUI"
-        self.window.config(background="#000000")
+        self.window.config(background=self.colors["background_color"])
         self.window.geometry(f"{self.conversion.to_px(self.pixel_size[0])}x{self.conversion.to_px(self.pixel_size[1])}")
         self.window.resizable(0, 0)
 
@@ -97,6 +98,14 @@ class LayoutManager:
     ##################
     # Helper Methods #
     ##################
+
+    def get_window(self) -> tkinter.Tk:
+        """Return the window that all the widgets are contained within"""
+        return self.window
+
+    def get_colors(self) -> {str: str}:
+        """returns the dictionary of colors"""
+        return self.colors
 
     def get_widget(self, widget_id: str) -> BaseWidget:
         """
@@ -175,6 +184,7 @@ class UpdateManager:
         Adds an update checker for the given func that executes every time (in ms)
         func would be called with the given args and kwargs
         """
+        func(*args, **kwargs)
         LoopMethod(func, self.smart_mirror.get_window(), time)(*args, **kwargs)
 
     def add_widget_updater(self, widget, update_time=None) -> None:
@@ -205,7 +215,7 @@ class SmartMirror:
         """
         config = SmartMirror.parse_json(json_path)
         self.widgets: {str: BaseWidget} = OrderedDict()
-        self.layout_manager: LayoutManager = LayoutManager(self, config["window_config"])
+        self.layout_manager: LayoutManager = LayoutManager(self, config["window_config"], config["colors"])
         self.update_manager: UpdateManager = UpdateManager(self)
         self.add_widgets(map(self.construct_widget, config["widgets"]))
 
@@ -264,14 +274,18 @@ class SmartMirror:
         method required by UpdateManager to schedule regular method calls
         method required by BaseWidget as the tkinter frame requires a parent to be constructed within
         """
-        return self.layout_manager.window
+        return self.layout_manager.get_window()
 
-    def get_unused_id(self, w):
+    def get_unused_id(self, w) -> str:
         """
         see LayoutManager.get_unused_id:
             generates an unused ID for a widget in the scenario an ID was not defined in the widget's props
         """
         return self.layout_manager.get_unused_id(w)
+
+    def get_colors(self) -> {str: str}:
+        """returns the dictionary of colors"""
+        return self.layout_manager.get_colors()
 
     ##################
     # Helper Methods #
@@ -289,9 +303,5 @@ class SmartMirror:
 
 
 if __name__ == "__main__":
-    sm = SmartMirror("config.json")
-    print(sm)
-    if True:
-        import random
-        sm.add_constraints([Constraint.construct_lambda_constraint(sm.layout_manager, "4", "height", lambda: Size(random.randint(1,10), "in"))])
+    sm = SmartMirror("config/config.json")
     sm.mainloop()
