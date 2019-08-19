@@ -37,6 +37,6 @@ def construct_widget(parent, widget_config):
     try:
         assert widget_type.has_necessary_config()
     except AssertionError:
-        print(f"Widget of type {widget_type} could not be constructed as it is missing some necesarry files.\n\t Please see config/readme.txt for more details\n\t Widget will be constructed as a BaseWidget")
+        print(f"Widget of type {widget_type} could not be constructed as it is missing some necesarry files.\n\t Widget will be constructed as a BaseWidget")
         widget_type = BaseWidget
     return widget_type(parent, widget_config.get("subwidgets", []), widget_config["constraints"], widget_config["props"])

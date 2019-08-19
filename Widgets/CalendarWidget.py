@@ -40,9 +40,7 @@ class CalendarWidget(BaseWidget):
         """Shows basic usage of the Google Calendar API.
         Prints the start and name of the next 10 events on the user's calendar.
         """
-        creds = CalendarWidget.get_credentials()
-
-        service = build('calendar', 'v3', credentials=creds)
+        service = build('calendar', 'v3', credentials=CalendarWidget.get_credentials())
 
         # Call the Calendar API
         now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
@@ -50,6 +48,8 @@ class CalendarWidget(BaseWidget):
         events_result = service.events().list(calendarId='primary', timeMin=now,
                                             maxResults=10, singleEvents=True,
                                             orderBy='startTime').execute()
+        print(events_result)
+        """
         events = events_result.get('items', [])
 
         if not events:
@@ -57,4 +57,5 @@ class CalendarWidget(BaseWidget):
         for event in events:
             start = event['start'].get('dateTime', event['start'].get('date'))
             print(start, event['summary'])
+        """
         return args, kargs
