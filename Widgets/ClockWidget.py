@@ -7,7 +7,7 @@ import datetime
 class ClockWidget(BaseWidget):
     def __init__(self, parent, subwidgets=[], constraints=[], props={}):
         BaseWidget.__init__(self, parent, subwidgets, constraints, props)
-        self.type = ClockWidget.prop_get(props, "type", "analog", lambda x: x in ["digital", "analog"])
+        self.type = ClockWidget.prop_get(props, "clock type", "analog", lambda x: x in ["digital", "analog"])
         self.config(bg=self.get_color("background_color"))
         self.clock_dimensions = (0, 0)
         self.hour, self.minute, self.seconds = 0, 0, 0

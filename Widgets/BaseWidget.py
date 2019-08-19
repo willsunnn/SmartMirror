@@ -108,13 +108,13 @@ class BaseWidget(tkinter.Frame):
         tkinter.Frame.__init__(self, parent.get_window())
         self.parent = parent
         self.props = props
-        self.id = self.props.get("id", None)
-        self.update_time = (lambda val: val if val > 0 else None)(int(self.props.get("update time", -1)))
         self.constraints = constraints
         self.dimensions = LayoutManagerHelper()
-        self.subwidgets = list(map(self.parent.construct_widget, subwidgets))
+        self.id = BaseWidget.prop_get(props, "id", None)
+        self.update_time = BaseWidget.prop_get(props, "update time", None, is_acceptable=(lambda x: x is None or x > 0))
         self.interactable = BaseWidget.prop_get(props, "interactable", False)
         if self.interactable: self.bind("<Button-1>", self.on_click)
+        self.subwidgets = list(map(self.parent.construct_widget, subwidgets))
 
     def __setattr__(self, key, value):
         """overloads __setattr__ such that if the property is pertinent to layouts,
@@ -204,16 +204,16 @@ class BaseWidget(tkinter.Frame):
         return all(map(BaseWidget.check_file_exists, cls.get_necessary_config()))
 
     @staticmethod
-    def get_necessary_config():
-        """Returns the necessary files for for the widget to run correctly
-        Overload this to return file paths of necessary files"""
-        return []
-
-    @staticmethod
     def check_file_exists(path: str):
         """Checks if the file exists"""
         from pathlib import Path
         return Path(path).exists()
+
+    @staticmethod
+    def get_necessary_config():
+        """Returns the necessary files for for the widget to run correctly
+        Overload this to return file paths of necessary files"""
+        return []
 
     @staticmethod
     def prop_get(props: {str: str}, prop: str, default, is_acceptable=lambda x: True):
