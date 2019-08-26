@@ -9,6 +9,11 @@ class WeatherWidget(BaseWidget):
     query_base = "https://samples.openweathermap.org/data/2.5/weather?zip={},{}&APPID={}"
     api_key_path = "config/OpenWeatherAPI/OpenWeatherAPIKey.txt"
 
+    @staticmethod
+    def get_necessary_config():
+        """Ensures that all the necesarry files to run this widget are found in the directory"""
+        return [WeatherWidget.api_key_path]
+
     def __init__(self, parent, subwidgets=[], constraints=[], props={}):
         BaseWidget.__init__(self, parent, subwidgets, constraints, props)
         self.zip_code = WeatherWidget.prop_get(props, "zip code", "92617")
