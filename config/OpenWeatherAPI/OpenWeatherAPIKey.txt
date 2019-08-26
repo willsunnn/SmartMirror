@@ -1,0 +1,11 @@
+e34d5b5cb7e4b60db66cb839ad67dbc6
+^    Insert your API Key in the first line of the file    ^
+
+
+To get an Open Weather API Key, sign up at the site below:
+
+https://home.openweathermap.org/users/sign_up
+
+Then get yor API Key from this page:
+
+https://home.openweathermap.org/api_keys

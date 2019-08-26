@@ -2,12 +2,16 @@ from pathlib import Path
 from Widgets.BaseWidget import BaseWidget
 from Widgets.ClockWidget import ClockWidget
 from Widgets.CalendarWidget import CalendarWidget
+from Widgets.WeatherWidget import WeatherWidget
+
+
 widgets_path = Path("Widgets/AddonWidgets")
 
 
 widgets = {"BaseWidget": BaseWidget,
            "CalendarWidget": CalendarWidget,
-           "ClockWidget": ClockWidget}
+           "ClockWidget": ClockWidget,
+           "WeatherWidget": WeatherWidget}
 
 
 def get_widget_folders(path: Path = widgets_path) -> [Path]:
