@@ -149,7 +149,25 @@ class BaseWidget(tkinter.Frame):
         return self.parent.get_colors()
 
     def get_color(self, col) -> str:
+        """convenience method to get the color"""
         return self.get_colors()[col]
+
+    def get_bg(self):
+        """convenience method to get the background color"""
+        return self.get_color("background_color")
+
+    def get_fg(self):
+        """convenience method to get the foreground color"""
+        return self.get_color("foreground_color")
+
+    def get_fonts(self) -> {str: str}:
+        """returns the dictionary of colors"""
+        return self.parent.get_fonts()
+
+    def get_font(self, size="medium"):
+        """returns the font and font size"""
+        fonts = self.get_fonts()
+        return fonts["type"], fonts["sizes"][size]
 
     def get_id(self) -> str:
         """if an ID has been defined, returns that ID. If not, it gets a unique ID and saves it, and then returns it"""

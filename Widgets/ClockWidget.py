@@ -8,13 +8,14 @@ class ClockWidget(BaseWidget):
     def __init__(self, parent, subwidgets=[], constraints=[], props={}):
         BaseWidget.__init__(self, parent, subwidgets, constraints, props)
         self.type = ClockWidget.prop_get(props, "clock type", "analog", lambda x: x in ["digital", "analog"])
-        self.config(bg=self.get_color("background_color"))
+        self.config(bg=self.get_bg())
         self.clock_dimensions = (0, 0)
         self.hour, self.minute, self.seconds = 0, 0, 0
         self.update_values()
-        self.clock_label = Label(self, bg=self.get_color("background_color"))
+        self.clock_label = Label(self, bg=self.get_bg())
 
     def place(self, *args, **kargs):
+        self.update_dimensions()
         BaseWidget.place(self, *args, **kargs)
         if self.type == "analog":
             self.update_dimensions()
@@ -45,4 +46,3 @@ class ClockWidget(BaseWidget):
     def update_values(self):
         now = datetime.datetime.now()
         self.hour, self.minute, self.seconds = now.hour, now.minute, now.second
-        self.update_dimensions()

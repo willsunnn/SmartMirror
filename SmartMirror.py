@@ -16,7 +16,7 @@ class LayoutManager:
     # Setup Methods #
     #################
 
-    def __init__(self, parent, size: {str: tuple}, colors: {str: str}):
+    def __init__(self, parent, size: {str: tuple}, colors: {str: str}, fonts: {str: str}):
         """
         Initializes a layout manager object that manages the widgets of parents.widgets
 
@@ -28,6 +28,7 @@ class LayoutManager:
         self.physical_size, self.pixel_size = None, None
         self.set_conversion(size)
         self.colors = colors
+        self.fonts = fonts
         self.window = tkinter.Tk()
         self.configure_window()
         self.constraints: OrderedDict = OrderedDict()
@@ -107,6 +108,10 @@ class LayoutManager:
         """returns the dictionary of colors"""
         return self.colors
 
+    def get_fonts(self) -> {}:
+        """returns the dictionary of colors"""
+        return self.fonts
+
     def get_widget(self, widget_id: str) -> BaseWidget:
         """
         returns the widget associated with the widget_id so that its properties may be referenced
@@ -184,7 +189,6 @@ class UpdateManager:
         Adds an update checker for the given func that executes every time (in ms)
         func would be called with the given args and kwargs
         """
-        func(*args, **kwargs)
         LoopMethod(func, self.smart_mirror.get_window(), time)(*args, **kwargs)
 
     def add_widget_updater(self, widget, update_time=None) -> None:
@@ -215,7 +219,7 @@ class SmartMirror:
         """
         config = SmartMirror.parse_json(json_path)
         self.widgets: {str: BaseWidget} = OrderedDict()
-        self.layout_manager: LayoutManager = LayoutManager(self, config["window_config"], config["colors"])
+        self.layout_manager: LayoutManager = LayoutManager(self, config["window_config"], config["colors"], config["fonts"])
         self.update_manager: UpdateManager = UpdateManager(self)
         self.add_widgets(map(self.construct_widget, config["widgets"]))
 
@@ -286,6 +290,10 @@ class SmartMirror:
     def get_colors(self) -> {str: str}:
         """returns the dictionary of colors"""
         return self.layout_manager.get_colors()
+
+    def get_fonts(self) -> {str: str}:
+        """returns the dictionary of colors"""
+        return self.layout_manager.get_fonts()
 
     ##################
     # Helper Methods #

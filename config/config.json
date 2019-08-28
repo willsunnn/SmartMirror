@@ -12,38 +12,41 @@
 
   "colors": {
     "background_color": "#000000",
-    "white_color": "#FFFFFF",
+    "foreground_color": "#FFFFFF",
     "base_color": "#FF00FF"
+  },
+
+  "fonts": {
+    "type": "Helvetica",
+    "sizes": {
+      "tiny": 4,
+      "scriptsize": 6,
+      "footnotesize": 9,
+      "small": 11,
+      "medium": 14,
+      "large": 18,
+      "Large": 22,
+      "LARGE": 26,
+      "huge": 30,
+      "Huge": 40
+    }
   },
 
   "widgets": [
     {
-      "name": "BaseWidget",
-      "props": {"id":"1", "update time":1000},
-      "constraints":["1.left=2.right+100px", "1.width=50px", "1.top=2.bottom*1.5"],
-      "subwidgets": [
-        {
-          "name": "BaseWidget",
-          "props": {"id":"3"},
-          "constraints": ["3.left=2.right+100px", "3.width=1.width"],
-          "subwidgets": []
-        }
-      ]
-    },
-    {
       "name": "ClockWidget",
-      "props": {"id":"2", "update time":1500},
-      "constraints": ["2.left=1in", "2.width=3in", "2.top=1in", "2.height=2.width"]
+      "props": {"id":"1", "update time":1500},
+      "constraints": ["1.left=1in", "1.width=3in", "1.top=1in", "1.height=1.width"]
     },
     {
       "name": "CalendarWidget",
-      "props": {"id":"4", "update time":10000},
-      "constraints": ["4.left=2.left", "4.width=2.width", "4.top=2.bottom+1in", "4.height=2.height"]
+      "props": {"id":"2", "update time":10000},
+      "constraints": ["2.left=1.left", "2.width=1.width", "2.top=1.bottom+1in", "2.height=1.height"]
     },
     {
       "name": "WeatherWidget",
-      "props": {"id":"5", "update time":10000},
-      "constraints": ["5.left=2.left", "5.width=2.width", "5.top=4.bottom+1in", "5.height=2.height"]
+      "props": {"id":"3", "update time":10000, "temperature units": "fahrenheit", "rounding": 1},
+      "constraints": ["3.left=1.left", "3.width=1.width", "3.top=2.bottom+1in", "3.height=1.height"]
     }
   ]
 }
