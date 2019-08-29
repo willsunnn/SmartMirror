@@ -45,8 +45,8 @@
     },
     {
       "name": "WeatherWidget",
-      "props": {"id":"3", "update time":10000, "temperature units": "fahrenheit", "rounding": 1},
-      "constraints": ["3.left=1.left", "3.width=1.width", "3.top=2.bottom+1in", "3.height=1.height"]
+      "props": {"id":"3", "update time":10000, "temperature units": "fahrenheit", "rounding": 1, "zip code": 95032},
+      "constraints": ["3.left=1.left", "3.width=1.width", "3.top=2.bottom+1in", "3.height=1.5*1.height"]
     }
   ]
 }
